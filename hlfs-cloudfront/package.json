@@ -1,0 +1,7 @@
+{
+  "name": "hlfs-cloudfront",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('hlfs-cloudfront: no distribution config yet')\""
+  }
+}

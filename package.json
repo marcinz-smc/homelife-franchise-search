@@ -1,0 +1,37 @@
+{
+  "name": "homelife-franchise-search",
+  "version": "0.1.1",
+  "private": true,
+  "workspaces": [
+    "hlfs-admin",
+    "hlfs-cloudfront",
+    "hlfs-lambda",
+    "hlfs-mongo"
+  ],
+  "scripts": {
+    "dev": "npm run build -w hlfs-mongo && concurrently -n lambda,admin -c cyan,magenta \"npm run dev -w hlfs-lambda\" \"npm run dev -w hlfs-admin\"",
+    "build": "node ./scripts/build.mjs",
+    "start": "npm run start -w hlfs-lambda",
+    "test": "npm run test -w hlfs-mongo && npm run test -w hlfs-lambda && npm run test -w hlfs-admin",
+    "seed:admin": "npm run seed:admin -w hlfs-lambda",
+    "import:local": "npm run import:local -w hlfs-lambda",
+    "import:reco": "npm run import:reco -w hlfs-lambda",
+    "geocode:retry": "npm run geocode:retry -w hlfs-lambda",
+    "geocode:reco": "npm run geocode:reco -w hlfs-lambda",
+    "scrape:silvercity": "npm exec -w hlfs-lambda -- tsx ../hlfs-scrape/src/compareSilverCity.ts",
+    "patch": "npm run build && npm version patch && git push --tags",
+    "deploy:preview": "node ./scripts/deploy-preview.mjs",
+    "deploy:production": "node ./scripts/deploy-production.mjs",
+    "deploy:lambda:preview": "node ./scripts/deploy-lambda-preview.mjs",
+    "deploy:lambda:production": "node ./scripts/deploy-lambda-production.mjs",
+    "deploy:cloudfront:preview": "node ./scripts/deploy-cloudfront-preview.mjs",
+    "deploy:cloudfront:production": "node ./scripts/deploy-cloudfront-production.mjs",
+    "deploy:s3:preview": "node ./scripts/deploy-s3-preview.mjs",
+    "deploy:s3:production": "node ./scripts/deploy-s3-production.mjs",
+    "deploy:ec2:preview": "node ./scripts/deploy-ec2-preview.mjs",
+    "deploy:ec2:production": "node ./scripts/deploy-ec2-production.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
