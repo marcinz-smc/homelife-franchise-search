@@ -1,0 +1,22 @@
+{
+  "name": "homelife-franchise-search",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "hlfs-admin",
+    "hlfs-cloudfront",
+    "hlfs-lambda",
+    "hlfs-mongo"
+  ],
+  "scripts": {
+    "build": "node ./script/build.mjs",
+    "deploy:preview": "node ./script/deploy-preview.mjs",
+    "deploy:production": "node ./script/deploy-production.mjs",
+    "deploy:lambda:preview": "node ./script/deploy-lambda-preview.mjs",
+    "deploy:lambda:production": "node ./script/deploy-lambda-production.mjs",
+    "deploy:cloudfront:preview": "node ./script/deploy-cloudfront-preview.mjs",
+    "deploy:cloudfront:production": "node ./script/deploy-cloudfront-production.mjs",
+    "deploy:s3:preview": "node ./script/deploy-s3-preview.mjs",
+    "deploy:s3:production": "node ./script/deploy-s3-production.mjs"
+  }
+}
