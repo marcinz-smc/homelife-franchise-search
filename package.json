@@ -9,6 +9,7 @@
     "hlfs-mongo"
   ],
   "scripts": {
+    "patch": "npm run build && npm version patch && git push --tags",
     "build": "node ./script/build.mjs",
     "deploy:preview": "node ./script/deploy-preview.mjs",
     "deploy:production": "node ./script/deploy-production.mjs",
