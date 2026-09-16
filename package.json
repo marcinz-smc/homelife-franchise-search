@@ -17,6 +17,8 @@
     "deploy:cloudfront:preview": "node ./script/deploy-cloudfront-preview.mjs",
     "deploy:cloudfront:production": "node ./script/deploy-cloudfront-production.mjs",
     "deploy:s3:preview": "node ./script/deploy-s3-preview.mjs",
-    "deploy:s3:production": "node ./script/deploy-s3-production.mjs"
+    "deploy:s3:production": "node ./script/deploy-s3-production.mjs",
+    "deploy:ec2:preview": "node ./script/deploy-ec2-preview.mjs",
+    "deploy:ec2:production": "node ./script/deploy-ec2-production.mjs"
   }
 }
