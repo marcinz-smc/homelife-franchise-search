@@ -32,3 +32,5 @@ Scripts are defined in `package.json`:
 | npm run deploy:cloudfront:production | Deploy CloudFront to production |
 | npm run deploy:s3:preview            | Deploy S3 assets to preview     |
 | npm run deploy:s3:production         | Deploy S3 assets to production  |
+| npm run deploy:ec2:preview           | Deploy EC2 to preview           |
+| npm run deploy:ec2:production        | Deploy EC2 to production        |
