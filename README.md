@@ -15,6 +15,7 @@
 | hlfs-cloudfront | CloudFront distribution configuration       |
 | hlfs-lambda     | Serverless Lambda functions                 |
 | hlfs-mongo      | MongoDB schemas, seed data and access layer |
+| hlfs-1pass      | 1Password integration / secrets management  |
 | script          | Deployment and build scripts                |
 
 ## Commands
