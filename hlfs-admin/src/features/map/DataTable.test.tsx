@@ -2,7 +2,7 @@ import type { FeatureCollection } from "geojson";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Office, RecoBrokerage } from "../../types";
-import { DataTable, groupRowsByCity, rowPlotColor, rowsFromPoints } from "./DataTable";
+import { DataTable, rowPlotColor, rowsFromPoints, sortDeskRows } from "./DataTable";
 import { SCORE_COLORS } from "./leadScore";
 
 const points: FeatureCollection = {
@@ -114,14 +114,27 @@ const reco: RecoBrokerage = {
   lng: -79.4,
 };
 
-test("sorts desks by city then name", () => {
-  const rows = rowsFromPoints(points);
-  expect(rows.map((row) => `${row.city}:${row.name}`)).toEqual([
+test("sorts desks by city, name, or farthest HomeLife", () => {
+  const centers: FeatureCollection = {
+    type: "FeatureCollection",
+    features: [points.features[1]],
+  };
+  const rows = rowsFromPoints(points, centers);
+  expect(sortDeskRows(rows, "city").map((row) => `${row.city}:${row.name}`)).toEqual([
     "Mississauga:HomeLife 247",
     "Toronto:Apex Realty",
     "Toronto:Royal LePage Sample",
   ]);
-  expect(groupRowsByCity(rows).map((group) => group.city)).toEqual(["Mississauga", "Toronto"]);
+  expect(sortDeskRows(rows, "name").map((row) => row.name)).toEqual([
+    "Apex Realty",
+    "HomeLife 247",
+    "Royal LePage Sample",
+  ]);
+  expect(sortDeskRows(rows, "distance").map((row) => row.name)).toEqual([
+    "Royal LePage Sample",
+    "Apex Realty",
+    "HomeLife 247",
+  ]);
 });
 
 test("shows contact fields and kilometres to HomeLife on each row", () => {
@@ -148,6 +161,8 @@ test("shows contact fields and kilometres to HomeLife on each row", () => {
   expect(screen.getAllByText("HomeLife").length).toBeGreaterThan(0);
   expect(screen.getAllByText("RECO").length).toBeGreaterThan(0);
   expect(screen.getByText("0 km")).toBeInTheDocument();
+  expect(screen.getByText("Mississauga")).toBeInTheDocument();
+  expect(screen.getAllByText("Toronto").length).toBeGreaterThan(0);
 });
 
 test("color-codes HomeLife and scored desks with the map palette", () => {
@@ -166,15 +181,18 @@ test("color-codes HomeLife and scored desks with the map palette", () => {
     />,
   );
 
-  expect(screen.getByRole("button", { name: /homelife 247/i })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: /homelife 247/i }).closest("[data-plot-color]")).toHaveAttribute(
     "data-plot-color",
     SCORE_COLORS.homelife,
   );
-  expect(screen.getByRole("button", { name: /royal lepage sample/i })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: /royal lepage sample/i }).closest("[data-plot-color]")).toHaveAttribute(
     "data-plot-color",
     SCORE_COLORS.medium,
   );
-  expect(screen.getByRole("button", { name: /apex realty/i })).toHaveAttribute("data-plot-color", "none");
+  expect(screen.getByRole("button", { name: /apex realty/i }).closest("[data-plot-color]")).toHaveAttribute(
+    "data-plot-color",
+    "none",
+  );
 });
 
 test("expands a HomeLife row with office fields", async () => {
@@ -238,4 +256,59 @@ test("expands a RECO row with detail tabs", async () => {
   expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
   await user.click(screen.getByRole("tab", { name: "Registry" }));
   expect(screen.getByTestId("registry-panel")).toHaveTextContent("R200");
+});
+
+test("copies phone and email without opening the row", async () => {
+  const user = userEvent.setup();
+  const writeText = vi.fn(async () => undefined);
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText },
+  });
+  const onSelect = vi.fn(async () => undefined);
+  render(
+    <DataTable
+      points={points}
+      selectedOffice={null}
+      selectedReco={null}
+      onSelect={onSelect}
+      onClear={() => undefined}
+    />,
+  );
+
+  await user.click(screen.getByRole("button", { name: "Copy phone 905.858.1999" }));
+  expect(writeText).toHaveBeenCalledWith("905.858.1999");
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.click(screen.getByRole("button", { name: "Copy email royal@example.com" }));
+  expect(writeText).toHaveBeenCalledWith("royal@example.com");
+  expect(screen.getAllByRole("button", { name: "Copied" }).length).toBeGreaterThan(0);
+});
+
+test("defaults to city order and can sort by farthest HomeLife", async () => {
+  const user = userEvent.setup();
+  const centers: FeatureCollection = {
+    type: "FeatureCollection",
+    features: [points.features[1]],
+  };
+  render(
+    <DataTable
+      points={points}
+      zoneCenters={centers}
+      selectedOffice={null}
+      selectedReco={null}
+      onSelect={async () => undefined}
+      onClear={() => undefined}
+    />,
+  );
+
+  const names = () =>
+    screen.getAllByRole("button", { name: /apex realty|homelife 247|royal lepage sample/i }).map((button) =>
+      button.textContent,
+    );
+  expect(names()[0]).toMatch(/homelife 247/i);
+  expect(screen.getByRole("button", { name: "City" })).toHaveAttribute("aria-pressed", "true");
+
+  await user.click(screen.getByRole("button", { name: "Farthest HL" }));
+  expect(names()[0]).toMatch(/royal lepage sample/i);
 });
