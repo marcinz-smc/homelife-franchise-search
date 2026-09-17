@@ -47,6 +47,9 @@ router.get("/points", async (req, res, next) => {
             name: office.name,
             city: office.city,
             province: office.province,
+            email: office.email || "",
+            phone: office.phone || "",
+            broker: office.broker || office.primaryContactName || "",
           },
         })),
       );
@@ -76,7 +79,7 @@ router.get("/points", async (req, res, next) => {
         "location.coordinates.0": { $exists: true },
       })
         .select(
-          "legalName companyKey searchCity location lead.overallScore lead.scoreBand lead.serviceNeed lead.foundation lead.conversion lead.originRegistrationNumber lead.shared",
+          "legalName companyKey searchCity location email phone brokerOfRecord lead.overallScore lead.scoreBand lead.serviceNeed lead.foundation lead.conversion lead.originRegistrationNumber lead.shared lead.contact.email lead.contact.phone lead.contact.name",
         )
         .lean<RecoLean[]>();
       const donors = await donorLeadsFor(recos);
@@ -94,6 +97,9 @@ router.get("/points", async (req, res, next) => {
               name: item.legalName,
               city: item.searchCity,
               province: "Ontario",
+              email: String(lead?.contact?.email || item.email || "").trim(),
+              phone: String(lead?.contact?.phone || item.phone || "").trim(),
+              broker: String(item.brokerOfRecord || "").trim(),
               companyKey: item.companyKey || "",
               hasLead: lead?.overallScore != null ? 1 : 0,
               overallScore: lead?.overallScore ?? null,

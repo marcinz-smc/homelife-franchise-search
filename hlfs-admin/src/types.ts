@@ -189,6 +189,7 @@ export type MapFilters = {
   showCities: boolean;
   showZones: boolean;
   outsideZones: boolean;
+  scoredOnly: boolean;
 };
 
 export const defaultFilters: MapFilters = {
@@ -203,4 +204,5 @@ export const defaultFilters: MapFilters = {
   showCities: false,
   showZones: true,
   outsideZones: false,
+  scoredOnly: false,
 };

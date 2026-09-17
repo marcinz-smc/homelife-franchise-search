@@ -4,7 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { MapFilters, Municipality, SearchHit } from "../../types";
-import { filterOutsideHomeLifeZones, homelifeZoneCollection } from "./geo";
+import { homelifeZoneCollection, visibleBrokeragePoints } from "./geo";
 import { formatScore, SCORE_COLORS } from "./leadScore";
 import { SelectedPinCard, type SelectedMapPin } from "./SelectedPinCard";
 
@@ -429,8 +429,8 @@ export function MapCanvas({
         const officeCount = Number(feature?.properties?.officeCount ?? 1);
         const detail =
           officeCount > 1
-            ? `Connected 10km zone · ${officeCount} HomeLife offices`
-            : "10km HomeLife zone";
+            ? `Connected 5km zone · ${officeCount} HomeLife offices`
+            : "5km HomeLife zone";
         if (event.lngLat) {
           popupRef.current
             ?.setLngLat(event.lngLat)
@@ -584,7 +584,7 @@ export function MapCanvas({
       <div className="pointer-events-none absolute bottom-6 left-6 border border-white/10 bg-ink-900/92 px-3 py-3 text-xs text-fog-300 backdrop-blur-md">
         <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-copper-400">Legend</p>
         <LegendRow color={SCORE_COLORS.homelife} shape="house" label="HomeLife office" />
-        <LegendRow color="#d9a066" shape="line" label="10km HomeLife zone" />
+        <LegendRow color="#d9a066" shape="line" label="5km HomeLife zone" />
         <LegendRow color={SCORE_COLORS.default} shape="diamond" label="Other brokerages" />
         <LegendRow color="#f4ead8" shape="ring" label="Same company" />
         <LegendRow color={SCORE_COLORS.low} shape="diamond" label="Low score" glow />
@@ -752,9 +752,11 @@ function applyMapData(
   const clustered = map.getSource("offices") as mapboxgl.GeoJSONSource | undefined;
   const cities = map.getSource("municipalities") as mapboxgl.GeoJSONSource | undefined;
   const zones = map.getSource("homelife-zones") as mapboxgl.GeoJSONSource | undefined;
-  const visiblePoints = filters.outsideZones
-    ? filterOutsideHomeLifeZones(points, zoneCenters)
-    : points;
+  const visiblePoints = visibleBrokeragePoints(points, zoneCenters, {
+    outsideZones: filters.outsideZones,
+    coverage: filters.coverage,
+    scoredOnly: filters.scoredOnly,
+  });
   const homelifeHeat: FeatureCollection = {
     type: "FeatureCollection",
     features: visiblePoints.features.filter((feature) => feature.properties?.brand === "homelife"),

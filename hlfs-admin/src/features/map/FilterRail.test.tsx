@@ -105,6 +105,9 @@ test("toggles brand and municipality visibility", async () => {
   await user.click(screen.getByLabelText(/show ontario municipalities/i));
   expect(onChange).toHaveBeenCalledWith({ ...defaultFilters, showCities: true });
 
-  await user.click(screen.getByLabelText(/only brokerages outside 10km/i));
+  await user.click(screen.getByLabelText(/only brokerages outside 5km/i));
   expect(onChange).toHaveBeenCalledWith({ ...defaultFilters, outsideZones: true });
+
+  await user.click(screen.getByLabelText(/only advanced data plots/i));
+  expect(onChange).toHaveBeenCalledWith({ ...defaultFilters, scoredOnly: true });
 });

@@ -1,7 +1,7 @@
 import type { Feature, FeatureCollection, Point, Polygon, Position } from "geojson";
 import polygonClipping from "polygon-clipping";
 
-export const HOMELIFE_ZONE_KM = 10;
+export const HOMELIFE_ZONE_KM = 5;
 
 export function haversineKm(a: Position, b: Position): number {
   const earthKm = 6371;
@@ -110,6 +110,57 @@ function unionPolygons(polygons: Polygon[]): Polygon[] {
   } catch {
     return polygons;
   }
+}
+
+export function nearestHomeLifeKm(
+  feature: Feature,
+  centers: FeatureCollection,
+): number | null {
+  const coordinates = pointCoordinates(feature);
+  if (!coordinates) return null;
+  let nearest: number | null = null;
+  for (const home of centers.features) {
+    const homeCoordinates = pointCoordinates(home);
+    if (!homeCoordinates) continue;
+    const km = haversineKm(coordinates, homeCoordinates);
+    if (nearest == null || km < nearest) nearest = km;
+  }
+  return nearest;
+}
+
+export function formatKm(km: number | null): string {
+  if (km == null || !Number.isFinite(km)) return "—";
+  if (km < 0.05) return "0 km";
+  if (km < 10) return `${km.toFixed(1)} km`;
+  return `${Math.round(km)} km`;
+}
+
+export function featureHasLead(feature: Feature): boolean {
+  return Number(feature.properties?.hasLead) >= 1;
+}
+
+export function filterScoredBrokerages(points: FeatureCollection): FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: points.features.filter(featureHasLead),
+  };
+}
+
+export function visibleBrokeragePoints(
+  points: FeatureCollection,
+  centers: FeatureCollection,
+  options: { outsideZones: boolean; coverage: string; scoredOnly?: boolean },
+): FeatureCollection {
+  const zoned = options.outsideZones ? filterOutsideHomeLifeZones(points, centers) : points;
+  const scored = options.scoredOnly ? filterScoredBrokerages(zoned) : zoned;
+  const features =
+    options.coverage === "offices"
+      ? scored.features.filter((feature) => feature.properties?.brand === "homelife")
+      : scored.features;
+  return {
+    type: "FeatureCollection",
+    features: features.slice(),
+  };
 }
 
 export function filterOutsideHomeLifeZones(

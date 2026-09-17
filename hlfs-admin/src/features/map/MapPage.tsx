@@ -12,12 +12,14 @@ import {
   type SearchHit,
 } from "../../types";
 import { useAuth } from "../auth/AuthContext";
+import { DataTable } from "./DataTable";
 import { FilterRail } from "./FilterRail";
+import { visibleBrokeragePoints } from "./geo";
 import { MapCanvas } from "./MapCanvas";
-import type { SelectedMapPin } from "./SelectedPinCard";
 import { OfficeDrawer } from "./OfficeDrawer";
 import { OpportunityPanel } from "./OpportunityPanel";
 import { RecoDrawer } from "./RecoDrawer";
+import type { SelectedMapPin } from "./SelectedPinCard";
 
 const emptyFacets: FilterFacets = {
   provinces: [],
@@ -45,6 +47,7 @@ export function MapPage() {
   const [selectedReco, setSelectedReco] = useState<RecoBrokerage | null>(null);
   const [focus, setFocus] = useState<Municipality | null>(null);
   const [error, setError] = useState("");
+  const [atlasView, setAtlasView] = useState<"map" | "data">("map");
 
   const query = useMemo(
     () =>
@@ -157,6 +160,16 @@ export function MapPage() {
       .map((item) => item.id);
   }, [selectedReco]);
 
+  const listPoints = useMemo(
+    () =>
+      visibleBrokeragePoints(points, zoneCenters, {
+        outsideZones: filters.outsideZones,
+        coverage: filters.coverage,
+        scoredOnly: filters.scoredOnly,
+      }),
+    [filters.coverage, filters.outsideZones, filters.scoredOnly, points, zoneCenters],
+  );
+
   async function selectHit(hit: SearchHit) {
     try {
       if (hit.source === "reco") {
@@ -173,6 +186,10 @@ export function MapPage() {
     }
   }
 
+  function openRecoLocation(id: string) {
+    void selectHit({ id, source: "reco", name: "", city: "", province: "" });
+  }
+
   return (
     <div className="flex h-screen flex-col bg-ink-950 text-parchment-200">
       <header className="flex items-center justify-between border-b border-white/10 bg-ink-900 px-5 py-3">
@@ -183,6 +200,32 @@ export function MapPage() {
           <h1 className="font-display text-2xl italic text-parchment-100">The ground we hold</h1>
         </div>
         <div className="flex items-center gap-4 text-sm text-fog-300">
+          <nav className="flex border border-white/10" aria-label="Atlas views">
+            <button
+              type="button"
+              aria-pressed={atlasView === "map"}
+              onClick={() => setAtlasView("map")}
+              className={`px-3 py-1.5 text-xs uppercase tracking-[0.16em] ${
+                atlasView === "map"
+                  ? "bg-copper-500 text-ink-950"
+                  : "text-fog-300 hover:text-parchment-100"
+              }`}
+            >
+              Map
+            </button>
+            <button
+              type="button"
+              aria-pressed={atlasView === "data"}
+              onClick={() => setAtlasView("data")}
+              className={`px-3 py-1.5 text-xs uppercase tracking-[0.16em] ${
+                atlasView === "data"
+                  ? "bg-copper-500 text-ink-950"
+                  : "text-fog-300 hover:text-parchment-100"
+              }`}
+            >
+              Data
+            </button>
+          </nav>
           <span className="hidden sm:inline">{user?.email}</span>
           <Link to="/admin" className="border border-copper-500/40 px-3 py-1.5 text-copper-400">
             Import desk
@@ -208,31 +251,54 @@ export function MapPage() {
           onSelectHit={selectHit}
         />
         <div className="relative min-h-[420px] overflow-hidden">
-          <MapCanvas
-            token={import.meta.env.VITE_MAPBOX_TOKEN ?? ""}
-            points={points}
-            zoneCenters={zoneCenters}
-            municipalities={cityGeojson}
-            filters={filters}
-            focus={focus}
-            selectedPin={selectedPin}
-            relatedIds={relatedIds}
-            onSelectHit={selectHit}
-          />
-          <OfficeDrawer office={selectedOffice} onClose={() => setSelectedOffice(null)} />
-          <RecoDrawer
-            brokerage={selectedReco}
-            onClose={() => setSelectedReco(null)}
-            onSelectLocation={(id) => {
-              void selectHit({ id, source: "reco", name: "", city: "", province: "" });
-            }}
-          />
-          <OpportunityPanel
-            municipalities={municipalities}
-            open={ledgerOpen}
-            onToggle={() => setLedgerOpen((value) => !value)}
-            onFocus={setFocus}
-          />
+          <div
+            className={`absolute inset-0 ${atlasView === "map" ? "" : "invisible pointer-events-none"}`}
+            aria-hidden={atlasView !== "map"}
+          >
+            <MapCanvas
+              token={import.meta.env.VITE_MAPBOX_TOKEN ?? ""}
+              points={points}
+              zoneCenters={zoneCenters}
+              municipalities={cityGeojson}
+              filters={filters}
+              focus={focus}
+              selectedPin={selectedPin}
+              relatedIds={relatedIds}
+              onSelectHit={selectHit}
+            />
+            {atlasView === "map" ? (
+              <>
+                <OfficeDrawer office={selectedOffice} onClose={() => setSelectedOffice(null)} />
+                <RecoDrawer
+                  brokerage={selectedReco}
+                  onClose={() => setSelectedReco(null)}
+                  onSelectLocation={openRecoLocation}
+                />
+                <OpportunityPanel
+                  municipalities={municipalities}
+                  open={ledgerOpen}
+                  onToggle={() => setLedgerOpen((value) => !value)}
+                  onFocus={setFocus}
+                />
+              </>
+            ) : null}
+          </div>
+          {atlasView === "data" ? (
+            <div className="absolute inset-0">
+              <DataTable
+                points={listPoints}
+                zoneCenters={zoneCenters}
+                selectedOffice={selectedOffice}
+                selectedReco={selectedReco}
+                onSelect={selectHit}
+                onClear={() => {
+                  setSelectedOffice(null);
+                  setSelectedReco(null);
+                }}
+                onSelectLocation={openRecoLocation}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

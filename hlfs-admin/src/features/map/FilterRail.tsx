@@ -145,7 +145,7 @@ export function FilterRail({ filters, facets, results = [], onChange, onSelectHi
           onChange={(event) => set("showZones", event.target.checked)}
           className="accent-copper-500"
         />
-        Show 10km HomeLife zones
+        Show 5km HomeLife zones
       </label>
       <label className="flex items-center gap-3 text-sm text-fog-300">
         <input
@@ -154,7 +154,16 @@ export function FilterRail({ filters, facets, results = [], onChange, onSelectHi
           onChange={(event) => set("outsideZones", event.target.checked)}
           className="accent-steel-500"
         />
-        Only Brokerages outside 10km
+        Only Brokerages outside 5km
+      </label>
+      <label className="flex items-center gap-3 text-sm text-fog-300">
+        <input
+          type="checkbox"
+          checked={filters.scoredOnly}
+          onChange={(event) => set("scoredOnly", event.target.checked)}
+          className="accent-copper-500"
+        />
+        Only advanced data plots
       </label>
       <label className="flex items-center gap-3 text-sm text-fog-300">
         <input
